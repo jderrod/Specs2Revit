@@ -45,12 +45,37 @@ try:
     print('Created reference floor and wall.')
 
 
-    # --- Front Panel 1: Sample Door Type ---
-    panel_width = 2.5
+    # --- Side Wall Panel 1: Sample Side Panel Type ---
+    stall_depth = 4.166666666666667
     panel_height = 4.333333333333333
     panel_thickness = 0.0833
     panel_offset_x = 0
-    stall_depth = 4.833333333333333
+    vertical_offset = 0.5
+
+    # Define profile in YZ plane, offset from the back wall and vertically
+    p1 = XYZ(panel_offset_x, 0.5, vertical_offset)
+    p2 = XYZ(panel_offset_x, stall_depth + 0.5, vertical_offset)
+    p3 = XYZ(panel_offset_x, stall_depth + 0.5, vertical_offset + panel_height)
+    p4 = XYZ(panel_offset_x, 0.5, vertical_offset + panel_height)
+    
+    panel_lines = [Line.CreateBound(p1, p2), Line.CreateBound(p2, p3), Line.CreateBound(p3, p4), Line.CreateBound(p4, p1)]
+    outer_loop = CurveLoop.Create(panel_lines)
+    
+    # First wall extrudes left, second wall extrudes right, creating the inner stall space
+    extrusion_dir = XYZ.BasisX.Negate() if True else XYZ.BasisX
+    panel_solid = GeometryCreationUtilities.CreateExtrusionGeometry([outer_loop], extrusion_dir, panel_thickness)
+    
+    shape_element = DirectShape.CreateElement(doc, ElementId(BuiltInCategory.OST_GenericModel))
+    shape_element.SetShape([panel_solid])
+    shape_element.Name = 'Panel 1 - Sample Side Panel Type'
+    print('Successfully created Side Wall Panel 1.')
+
+    # --- Front Panel 2: Sample Door Type ---
+    panel_width = 2.5
+    panel_height = 4.333333333333333
+    panel_thickness = 0.0833
+    panel_offset_x = 0.2916666666666667
+    stall_depth = 4.666666666666667
     floor_clearance = 0.5
 
     # 1. Define panel profile flat on the floor (XY plane at Z=0)
@@ -90,26 +115,51 @@ try:
     # 4. Create the DirectShape element
     shape_element = DirectShape.CreateElement(doc, ElementId(BuiltInCategory.OST_GenericModel))
     shape_element.SetShape([final_solid])
-    shape_element.Name = 'Panel 1 - Sample Door Type'
-    print('Created flat panel 1.')
+    shape_element.Name = 'Panel 2 - Sample Door Type'
+    print('Created flat panel 2.')
 
     # 5. Rotate the panel 90 degrees up around its front edge
     rotation_axis = Line.CreateBound(p1, p2)
     ElementTransformUtils.RotateElement(doc, shape_element.Id, rotation_axis, math.pi / 2)
-    print('Rotated front panel 1 up.')
+    print('Rotated front panel 2 up.')
 
     # 6. Move the panel to its final height
     translation = XYZ(0, 0, floor_clearance)
     ElementTransformUtils.MoveElement(doc, shape_element.Id, translation)
-    print('Moved front panel 1 to final height.')
+    print('Moved front panel 2 to final height.')
 
-    # --- Front Panel 2: Sample Pilaster Type ---
+    # --- Side Wall Panel 3: Sample Side Panel Type ---
+    stall_depth = 4.166666666666667
+    panel_height = 4.333333333333333
+    panel_thickness = 0.0833
+    panel_offset_x = 3.083333333333333
+    vertical_offset = 0.5
+
+    # Define profile in YZ plane, offset from the back wall and vertically
+    p1 = XYZ(panel_offset_x, 0.5, vertical_offset)
+    p2 = XYZ(panel_offset_x, stall_depth + 0.5, vertical_offset)
+    p3 = XYZ(panel_offset_x, stall_depth + 0.5, vertical_offset + panel_height)
+    p4 = XYZ(panel_offset_x, 0.5, vertical_offset + panel_height)
+    
+    panel_lines = [Line.CreateBound(p1, p2), Line.CreateBound(p2, p3), Line.CreateBound(p3, p4), Line.CreateBound(p4, p1)]
+    outer_loop = CurveLoop.Create(panel_lines)
+    
+    # First wall extrudes left, second wall extrudes right, creating the inner stall space
+    extrusion_dir = XYZ.BasisX.Negate() if False else XYZ.BasisX
+    panel_solid = GeometryCreationUtilities.CreateExtrusionGeometry([outer_loop], extrusion_dir, panel_thickness)
+    
+    shape_element = DirectShape.CreateElement(doc, ElementId(BuiltInCategory.OST_GenericModel))
+    shape_element.SetShape([panel_solid])
+    shape_element.Name = 'Panel 3 - Sample Side Panel Type'
+    print('Successfully created Side Wall Panel 3.')
+
+    # --- Front Panel 4: Sample Pilaster Type ---
     panel_width = 0.5833333333333334
     panel_height = 6.0
     panel_thickness = 0.0833
-    panel_offset_x = 3.5
-    stall_depth = 4.833333333333333
-    floor_clearance = 0.5
+    panel_offset_x = -0.14583333333333334
+    stall_depth = 4.749966666666667
+    floor_clearance = 0
 
     # 1. Define panel profile flat on the floor (XY plane at Z=0)
     p1 = XYZ(panel_offset_x, stall_depth, 0)
@@ -126,9 +176,9 @@ try:
 
     # 3. Create holes if needed
     if False:
-        bottom_hole_dist = 0.0
-        hole_dist_from_side = 0.25
-        hole_radius = 0.0208
+        bottom_hole_dist = 0
+        hole_dist_from_side = 0
+        hole_radius = 0
 
         hole_centers = [
             XYZ(panel_offset_x + hole_dist_from_side, stall_depth + bottom_hole_dist, 0),
@@ -148,26 +198,26 @@ try:
     # 4. Create the DirectShape element
     shape_element = DirectShape.CreateElement(doc, ElementId(BuiltInCategory.OST_GenericModel))
     shape_element.SetShape([final_solid])
-    shape_element.Name = 'Panel 2 - Sample Pilaster Type'
-    print('Created flat panel 2.')
+    shape_element.Name = 'Panel 4 - Sample Pilaster Type'
+    print('Created flat panel 4.')
 
     # 5. Rotate the panel 90 degrees up around its front edge
     rotation_axis = Line.CreateBound(p1, p2)
     ElementTransformUtils.RotateElement(doc, shape_element.Id, rotation_axis, math.pi / 2)
-    print('Rotated front panel 2 up.')
+    print('Rotated front panel 4 up.')
 
     # 6. Move the panel to its final height
     translation = XYZ(0, 0, floor_clearance)
     ElementTransformUtils.MoveElement(doc, shape_element.Id, translation)
-    print('Moved front panel 2 to final height.')
+    print('Moved front panel 4 to final height.')
 
-    # --- Front Panel 3: Sample Pilaster Type ---
+    # --- Front Panel 5: Sample Pilaster Type ---
     panel_width = 0.5833333333333334
     panel_height = 6.0
     panel_thickness = 0.0833
-    panel_offset_x = 5.083333333333334
-    stall_depth = 4.833333333333333
-    floor_clearance = 0.5
+    panel_offset_x = 2.6458333333333335
+    stall_depth = 4.749966666666667
+    floor_clearance = 0
 
     # 1. Define panel profile flat on the floor (XY plane at Z=0)
     p1 = XYZ(panel_offset_x, stall_depth, 0)
@@ -183,10 +233,10 @@ try:
     final_solid = panel_solid
 
     # 3. Create holes if needed
-    if True:
-        bottom_hole_dist = 1.4166666666666667
-        hole_dist_from_side = 0.25
-        hole_radius = 0.0208
+    if False:
+        bottom_hole_dist = 0
+        hole_dist_from_side = 0
+        hole_radius = 0
 
         hole_centers = [
             XYZ(panel_offset_x + hole_dist_from_side, stall_depth + bottom_hole_dist, 0),
@@ -206,66 +256,18 @@ try:
     # 4. Create the DirectShape element
     shape_element = DirectShape.CreateElement(doc, ElementId(BuiltInCategory.OST_GenericModel))
     shape_element.SetShape([final_solid])
-    shape_element.Name = 'Panel 3 - Sample Pilaster Type'
-    print('Created flat panel 3.')
+    shape_element.Name = 'Panel 5 - Sample Pilaster Type'
+    print('Created flat panel 5.')
 
     # 5. Rotate the panel 90 degrees up around its front edge
     rotation_axis = Line.CreateBound(p1, p2)
     ElementTransformUtils.RotateElement(doc, shape_element.Id, rotation_axis, math.pi / 2)
-    print('Rotated front panel 3 up.')
+    print('Rotated front panel 5 up.')
 
     # 6. Move the panel to its final height
     translation = XYZ(0, 0, floor_clearance)
     ElementTransformUtils.MoveElement(doc, shape_element.Id, translation)
-    print('Moved front panel 3 to final height.')
-
-    # --- Side Wall Panel 4: Sample Side Panel Type ---
-    stall_depth = 4.333333333333333
-    panel_height = 4.333333333333333
-    panel_thickness = 0.0833
-    panel_offset_x = 0 # This is 0 or stall_front_width
-
-    # Define profile in YZ plane, offset from the back wall by the wall's thickness (0.5 ft)
-    p1 = XYZ(panel_offset_x, 0.5, 0)
-    p2 = XYZ(panel_offset_x, stall_depth + 0.5, 0)
-    p3 = XYZ(panel_offset_x, stall_depth + 0.5, panel_height)
-    p4 = XYZ(panel_offset_x, 0.5, panel_height)
-    
-    panel_lines = [Line.CreateBound(p1, p2), Line.CreateBound(p2, p3), Line.CreateBound(p3, p4), Line.CreateBound(p4, p1)]
-    outer_loop = CurveLoop.Create(panel_lines)
-    
-    # Extrude along the X-axis. First wall extrudes right, second wall extrudes left.
-    extrusion_dir = XYZ.BasisX if True else XYZ.BasisX.Negate()
-    panel_solid = GeometryCreationUtilities.CreateExtrusionGeometry([outer_loop], extrusion_dir, panel_thickness)
-    
-    shape_element = DirectShape.CreateElement(doc, ElementId(BuiltInCategory.OST_GenericModel))
-    shape_element.SetShape([panel_solid])
-    shape_element.Name = 'Panel 4 - Sample Side Panel Type'
-    print('Successfully created Side Wall Panel 4.')
-
-    # --- Side Wall Panel 5: Sample Side Panel Type ---
-    stall_depth = 4.333333333333333
-    panel_height = 4.333333333333333
-    panel_thickness = 0.0833
-    panel_offset_x = 18.333333333333332 # This is 0 or stall_front_width
-
-    # Define profile in YZ plane, offset from the back wall by the wall's thickness (0.5 ft)
-    p1 = XYZ(panel_offset_x, 0.5, 0)
-    p2 = XYZ(panel_offset_x, stall_depth + 0.5, 0)
-    p3 = XYZ(panel_offset_x, stall_depth + 0.5, panel_height)
-    p4 = XYZ(panel_offset_x, 0.5, panel_height)
-    
-    panel_lines = [Line.CreateBound(p1, p2), Line.CreateBound(p2, p3), Line.CreateBound(p3, p4), Line.CreateBound(p4, p1)]
-    outer_loop = CurveLoop.Create(panel_lines)
-    
-    # Extrude along the X-axis. First wall extrudes right, second wall extrudes left.
-    extrusion_dir = XYZ.BasisX if False else XYZ.BasisX.Negate()
-    panel_solid = GeometryCreationUtilities.CreateExtrusionGeometry([outer_loop], extrusion_dir, panel_thickness)
-    
-    shape_element = DirectShape.CreateElement(doc, ElementId(BuiltInCategory.OST_GenericModel))
-    shape_element.SetShape([panel_solid])
-    shape_element.Name = 'Panel 5 - Sample Side Panel Type'
-    print('Successfully created Side Wall Panel 5.')
+    print('Moved front panel 5 to final height.')
 except Exception as e:
     print(f"An error occurred during panel creation: {e}")
     t.RollBack()

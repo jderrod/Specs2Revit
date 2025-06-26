@@ -73,19 +73,20 @@ SIDE_WALL_PANEL_TEMPLATE = """
     stall_depth = {stall_depth}
     panel_height = {panel_height}
     panel_thickness = {panel_thickness}
-    panel_offset_x = {panel_offset_x} # This is 0 or stall_front_width
+    panel_offset_x = {panel_offset_x}
+    vertical_offset = {vertical_offset}
 
-    # Define profile in YZ plane, offset from the back wall by the wall's thickness (0.5 ft)
-    p1 = XYZ(panel_offset_x, 0.5, 0)
-    p2 = XYZ(panel_offset_x, stall_depth + 0.5, 0)
-    p3 = XYZ(panel_offset_x, stall_depth + 0.5, panel_height)
-    p4 = XYZ(panel_offset_x, 0.5, panel_height)
+    # Define profile in YZ plane, offset from the back wall and vertically
+    p1 = XYZ(panel_offset_x, 0.5, vertical_offset)
+    p2 = XYZ(panel_offset_x, stall_depth + 0.5, vertical_offset)
+    p3 = XYZ(panel_offset_x, stall_depth + 0.5, vertical_offset + panel_height)
+    p4 = XYZ(panel_offset_x, 0.5, vertical_offset + panel_height)
     
     panel_lines = [Line.CreateBound(p1, p2), Line.CreateBound(p2, p3), Line.CreateBound(p3, p4), Line.CreateBound(p4, p1)]
     outer_loop = CurveLoop.Create(panel_lines)
     
-    # Extrude along the X-axis. First wall extrudes right, second wall extrudes left.
-    extrusion_dir = XYZ.BasisX if {is_first_wall} else XYZ.BasisX.Negate()
+    # First wall extrudes left, second wall extrudes right, creating the inner stall space
+    extrusion_dir = XYZ.BasisX.Negate() if {is_first_wall} else XYZ.BasisX
     panel_solid = GeometryCreationUtilities.CreateExtrusionGeometry([outer_loop], extrusion_dir, panel_thickness)
     
     shape_element = DirectShape.CreateElement(doc, ElementId(BuiltInCategory.OST_GenericModel))
@@ -190,78 +191,140 @@ def main():
 
     df.dropna(subset=['Panel Height'], inplace=True)
 
-    # --- First Pass: Calculate stall dimensions ---
-    stall_depth = 0
-    stall_front_width = 0
-    front_panel_widths = []
+    # --- Separate panels by type ---
+    side_panels_df = df[df['Type'].str.contains('side panel', case=False, na=False)].copy()
+    door_df = df[df['Type'].str.contains('door', case=False, na=False)].copy()
+    pilasters_df = df[df['Type'].str.contains('pilaster', case=False, na=False)].copy()
 
-    for index, row in df.iterrows():
-        panel_type = str(row['Type']).lower()
-        w = clean_and_convert_to_feet(row['Panel Width'])
-        h = clean_and_convert_to_feet(row['Panel Height'])
-        panel_width, _ = (h, w) if h > w else (w, h)
+    # --- Validate panel counts ---
+    if len(door_df) != 1:
+        print(f"Error: Expected 1 door panel, but found {len(door_df)}. Aborting.")
+        return
+    if len(side_panels_df) != 2:
+        print(f"Error: Expected 2 side panels, but found {len(side_panels_df)}. Aborting.")
+        return
+    if len(pilasters_df) != 2:
+        print(f"Error: Expected 2 pilaster panels, but found {len(pilasters_df)}. Aborting.")
+        return
 
-        if 'side panel' in panel_type:
-            if panel_width > stall_depth:
-                stall_depth = panel_width  # Stall depth is the width of the side walls
-        else:
-            front_panel_widths.append(panel_width)
+    # --- Get critical dimensions for layout ---
+    door_row = door_df.iloc[0]
+    door_width = clean_and_convert_to_feet(door_row['Panel Width'])
+    door_height = clean_and_convert_to_feet(door_row['Panel Height'])
 
-    if stall_depth == 0:
-        stall_depth = 5  # Default stall depth if no wall panels are found
-        print("Warning: Could not determine stall depth from 'Wall Panel' types. Using default depth.")
+    side_panel_1_row = side_panels_df.iloc[0]
+    stall_depth = clean_and_convert_to_feet(side_panel_1_row['Panel Width'])
 
-    stall_front_width = sum(front_panel_widths) + PANEL_SPACING_GAP * (len(front_panel_widths) - 1)
+    pilaster_1_row = pilasters_df.iloc[0]
+    pilaster_width = clean_and_convert_to_feet(pilaster_1_row['Panel Width'])
 
-    # --- Second Pass: Generate code for each panel ---
+    # --- Define Gap based on Pilaster Width ---
+    DOOR_GAP = pilaster_width * 0.5 # 50% of pilaster width
+
+    # --- Start generating script ---
     final_script_content = FILE_HEADER_TEMPLATE
-    current_front_offset_x = 0
     panel_counter = 1
-    side_wall_count = 0
 
-    for index, row in df.iterrows():
-        panel_type_raw = str(row['Type'])
-        panel_type_lower = panel_type_raw.lower()
-        panel_width = clean_and_convert_to_feet(row['Panel Width'])
-        panel_height = clean_and_convert_to_feet(row['Panel Height'])
+    # --- 1. Generate First Side Panel ---
+    panel_height_1 = clean_and_convert_to_feet(side_panel_1_row['Panel Height'])
+    vertical_offset_1 = (FLOOR_CLEARANCE + door_height) - panel_height_1
+    panel_type_1 = str(side_panel_1_row['Type']).replace("'", "\\'")
+    panel_code = SIDE_WALL_PANEL_TEMPLATE.format(
+        panel_index=panel_counter,
+        stall_depth=stall_depth,
+        panel_height=panel_height_1,
+        panel_thickness=PANEL_THICKNESS,
+        panel_offset_x=0,  # Profile at X=0, will extrude left
+        vertical_offset=vertical_offset_1,
+        is_first_wall=True,
+        panel_type=panel_type_1
+    )
+    final_script_content += panel_code
+    panel_counter += 1
 
-        bottom_hole = clean_and_convert_to_feet(row['Bottom Hole Distance'])
-        has_holes = bottom_hole > 0
-        panel_type_escaped = panel_type_raw.replace("'", "\\'")
+    # --- 2. Generate Door Panel ---
+    door_type = str(door_row['Type']).replace("'", "\\'")
+    bottom_hole = clean_and_convert_to_feet(door_row['Bottom Hole Distance'])
+    has_holes = bottom_hole > 0
+    panel_code = FRONT_PANEL_TEMPLATE.format(
+        panel_index=panel_counter,
+        panel_width=door_width,
+        panel_height=door_height,
+        panel_thickness=PANEL_THICKNESS,
+        panel_offset_x=DOOR_GAP,
+        stall_depth=stall_depth + 0.5,
+        floor_clearance=FLOOR_CLEARANCE,
+        has_holes=has_holes,
+        bottom_hole_dist=bottom_hole,
+        hole_dist_from_side=HOLE_DIST_FROM_SIDE,
+        hole_radius=HOLE_RADIUS,
+        panel_type=door_type
+    )
+    final_script_content += panel_code
+    panel_counter += 1
 
-        if 'side panel' in panel_type_lower:
-            is_first = (side_wall_count == 0)
-            offset_x = 0 if is_first else stall_front_width
-            panel_code = SIDE_WALL_PANEL_TEMPLATE.format(
-                panel_index=panel_counter,
-                stall_depth=stall_depth,
-                panel_height=panel_height,
-                panel_thickness=PANEL_THICKNESS,
-                panel_offset_x=offset_x,
-                is_first_wall=is_first,
-                panel_type=panel_type_escaped
-            )
-            side_wall_count += 1
-        else:
-            panel_code = FRONT_PANEL_TEMPLATE.format(
-                panel_index=panel_counter,
-                panel_width=panel_width,
-                panel_height=panel_height,
-                panel_thickness=PANEL_THICKNESS,
-                panel_offset_x=current_front_offset_x,
-                stall_depth=stall_depth + 0.5, # Add wall thickness for correct front position
-                floor_clearance=FLOOR_CLEARANCE,
-                has_holes=has_holes,
-                bottom_hole_dist=bottom_hole,
-                side_hole_dist=SIDE_HOLE_DISTANCE, # This is legacy, but might be used by hole logic
-                hole_dist_from_side=HOLE_DIST_FROM_SIDE,
-                hole_radius=HOLE_RADIUS,
-                panel_type=panel_type_escaped
-            )
-            current_front_offset_x += panel_width + PANEL_SPACING_GAP
+    # --- 3. Generate Second Side Panel ---
+    side_panel_2_row = side_panels_df.iloc[1]
+    panel_height_2 = clean_and_convert_to_feet(side_panel_2_row['Panel Height'])
+    vertical_offset_2 = (FLOOR_CLEARANCE + door_height) - panel_height_2
+    panel_type_2 = str(side_panel_2_row['Type']).replace("'", "\\'")
+    second_side_panel_offset_x = DOOR_GAP + door_width + DOOR_GAP
+    panel_code = SIDE_WALL_PANEL_TEMPLATE.format(
+        panel_index=panel_counter,
+        stall_depth=stall_depth,
+        panel_height=panel_height_2,
+        panel_thickness=PANEL_THICKNESS,
+        panel_offset_x=second_side_panel_offset_x,
+        vertical_offset=vertical_offset_2,
+        is_first_wall=False,
+        panel_type=panel_type_2
+    )
+    final_script_content += panel_code
+    panel_counter += 1
 
-        final_script_content += panel_code
-        panel_counter += 1
+    # --- 4. Generate Pilasters ---
+    # Pilaster 1 (covers first gap)
+    pilaster_1_height = clean_and_convert_to_feet(pilaster_1_row['Panel Height'])
+    pilaster_1_type = str(pilaster_1_row['Type']).replace("'", "\\'")
+    pilaster_1_offset_x = (DOOR_GAP / 2) - (pilaster_width / 2)
+    panel_code = FRONT_PANEL_TEMPLATE.format(
+        panel_index=panel_counter,
+        panel_width=pilaster_width,
+        panel_height=pilaster_1_height,
+        panel_thickness=PANEL_THICKNESS,
+        panel_offset_x=pilaster_1_offset_x,
+        stall_depth=stall_depth + 0.5 + PANEL_THICKNESS, # Positioned in front of the door
+        floor_clearance=0,  # Flush with floor
+        has_holes=False,
+        bottom_hole_dist=0,
+        hole_dist_from_side=0,
+        hole_radius=0,
+        panel_type=pilaster_1_type
+    )
+    final_script_content += panel_code
+    panel_counter += 1
+
+    # Pilaster 2 (covers second gap)
+    pilaster_2_row = pilasters_df.iloc[1]
+    pilaster_2_height = clean_and_convert_to_feet(pilaster_2_row['Panel Height'])
+    pilaster_2_type = str(pilaster_2_row['Type']).replace("'", "\\'")
+    pilaster_2_offset_x = DOOR_GAP + door_width + (DOOR_GAP / 2) - (pilaster_width / 2)
+    panel_code = FRONT_PANEL_TEMPLATE.format(
+        panel_index=panel_counter,
+        panel_width=pilaster_width,  # Assuming same width
+        panel_height=pilaster_2_height,
+        panel_thickness=PANEL_THICKNESS,
+        panel_offset_x=pilaster_2_offset_x,
+        stall_depth=stall_depth + 0.5 + PANEL_THICKNESS, # Positioned in front of the door
+        floor_clearance=0,  # Flush with floor
+        has_holes=False,
+        bottom_hole_dist=0,
+        hole_dist_from_side=0,
+        hole_radius=0,
+        panel_type=pilaster_2_type
+    )
+    final_script_content += panel_code
+    panel_counter += 1
 
     final_script_content += FILE_FOOTER_TEMPLATE
 
