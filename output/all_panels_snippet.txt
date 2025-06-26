@@ -157,7 +157,7 @@ try:
     panel_width = 0.5833333333333334
     panel_height = 6.0
     panel_thickness = 0.0833
-    panel_offset_x = -0.14583333333333334
+    panel_offset_x = -0.0833
     stall_depth = 4.749966666666667
     floor_clearance = 0
 
@@ -215,7 +215,7 @@ try:
     panel_width = 0.5833333333333334
     panel_height = 6.0
     panel_thickness = 0.0833
-    panel_offset_x = 2.6458333333333335
+    panel_offset_x = 2.5832999999999995
     stall_depth = 4.749966666666667
     floor_clearance = 0
 

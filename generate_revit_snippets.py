@@ -283,10 +283,10 @@ def main():
     panel_counter += 1
 
     # --- 4. Generate Pilasters ---
-    # Pilaster 1 (covers first gap)
+    # Pilaster 1 (align with outer edge of side panel 1)
     pilaster_1_height = clean_and_convert_to_feet(pilaster_1_row['Panel Height'])
     pilaster_1_type = str(pilaster_1_row['Type']).replace("'", "\\'")
-    pilaster_1_offset_x = (DOOR_GAP / 2) - (pilaster_width / 2)
+    pilaster_1_offset_x = -PANEL_THICKNESS # Align outer edge of pilaster with outer edge of side panel
     panel_code = FRONT_PANEL_TEMPLATE.format(
         panel_index=panel_counter,
         panel_width=pilaster_width,
@@ -304,11 +304,12 @@ def main():
     final_script_content += panel_code
     panel_counter += 1
 
-    # Pilaster 2 (covers second gap)
+    # Pilaster 2 (align with outer edge of side panel 2)
     pilaster_2_row = pilasters_df.iloc[1]
     pilaster_2_height = clean_and_convert_to_feet(pilaster_2_row['Panel Height'])
     pilaster_2_type = str(pilaster_2_row['Type']).replace("'", "\\'")
-    pilaster_2_offset_x = DOOR_GAP + door_width + (DOOR_GAP / 2) - (pilaster_width / 2)
+    # Align outer edge of pilaster with outer edge of side panel
+    pilaster_2_offset_x = (DOOR_GAP + door_width + DOOR_GAP) + PANEL_THICKNESS - pilaster_width
     panel_code = FRONT_PANEL_TEMPLATE.format(
         panel_index=panel_counter,
         panel_width=pilaster_width,  # Assuming same width
