@@ -221,6 +221,10 @@ def main():
     # --- Define Gap based on Pilaster Width ---
     DOOR_GAP = pilaster_width * 0.5 # 50% of pilaster width
 
+    # --- Calculate total stall width and centering offset ---
+    total_stall_width = door_width + (2 * DOOR_GAP) + (2 * PANEL_THICKNESS)
+    stall_start_offset = (20.0 - total_stall_width) / 2
+
     # --- Start generating script ---
     final_script_content = FILE_HEADER_TEMPLATE
     panel_counter = 1
@@ -234,7 +238,7 @@ def main():
         stall_depth=stall_depth,
         panel_height=panel_height_1,
         panel_thickness=PANEL_THICKNESS,
-        panel_offset_x=0,  # Profile at X=0, will extrude left
+        panel_offset_x=stall_start_offset,  # Apply centering offset
         vertical_offset=vertical_offset_1,
         is_first_wall=True,
         panel_type=panel_type_1
@@ -251,7 +255,7 @@ def main():
         panel_width=door_width,
         panel_height=door_height,
         panel_thickness=PANEL_THICKNESS,
-        panel_offset_x=DOOR_GAP,
+        panel_offset_x=stall_start_offset + DOOR_GAP,
         stall_depth=stall_depth + 0.5,
         floor_clearance=FLOOR_CLEARANCE,
         has_holes=has_holes,
@@ -268,7 +272,7 @@ def main():
     panel_height_2 = clean_and_convert_to_feet(side_panel_2_row['Panel Height'])
     vertical_offset_2 = (FLOOR_CLEARANCE + door_height) - panel_height_2
     panel_type_2 = str(side_panel_2_row['Type']).replace("'", "\\'")
-    second_side_panel_offset_x = DOOR_GAP + door_width + DOOR_GAP
+    second_side_panel_offset_x = stall_start_offset + DOOR_GAP + door_width + DOOR_GAP
     panel_code = SIDE_WALL_PANEL_TEMPLATE.format(
         panel_index=panel_counter,
         stall_depth=stall_depth,
@@ -286,15 +290,15 @@ def main():
     # Pilaster 1 (align with outer edge of side panel 1)
     pilaster_1_height = clean_and_convert_to_feet(pilaster_1_row['Panel Height'])
     pilaster_1_type = str(pilaster_1_row['Type']).replace("'", "\\'")
-    pilaster_1_offset_x = -PANEL_THICKNESS # Align outer edge of pilaster with outer edge of side panel
+    pilaster_1_offset_x = stall_start_offset - PANEL_THICKNESS
     panel_code = FRONT_PANEL_TEMPLATE.format(
         panel_index=panel_counter,
         panel_width=pilaster_width,
         panel_height=pilaster_1_height,
         panel_thickness=PANEL_THICKNESS,
         panel_offset_x=pilaster_1_offset_x,
-        stall_depth=stall_depth + 0.5 + PANEL_THICKNESS, # Positioned in front of the door
-        floor_clearance=0,  # Flush with floor
+        stall_depth=stall_depth + 0.5 + PANEL_THICKNESS,
+        floor_clearance=0,
         has_holes=False,
         bottom_hole_dist=0,
         hole_dist_from_side=0,
@@ -308,16 +312,15 @@ def main():
     pilaster_2_row = pilasters_df.iloc[1]
     pilaster_2_height = clean_and_convert_to_feet(pilaster_2_row['Panel Height'])
     pilaster_2_type = str(pilaster_2_row['Type']).replace("'", "\\'")
-    # Align outer edge of pilaster with outer edge of side panel
-    pilaster_2_offset_x = (DOOR_GAP + door_width + DOOR_GAP) + PANEL_THICKNESS - pilaster_width
+    pilaster_2_offset_x = stall_start_offset + (DOOR_GAP + door_width + DOOR_GAP) + PANEL_THICKNESS - pilaster_width
     panel_code = FRONT_PANEL_TEMPLATE.format(
         panel_index=panel_counter,
-        panel_width=pilaster_width,  # Assuming same width
+        panel_width=pilaster_width,
         panel_height=pilaster_2_height,
         panel_thickness=PANEL_THICKNESS,
         panel_offset_x=pilaster_2_offset_x,
-        stall_depth=stall_depth + 0.5 + PANEL_THICKNESS, # Positioned in front of the door
-        floor_clearance=0,  # Flush with floor
+        stall_depth=stall_depth + 0.5 + PANEL_THICKNESS,
+        floor_clearance=0,
         has_holes=False,
         bottom_hole_dist=0,
         hole_dist_from_side=0,
