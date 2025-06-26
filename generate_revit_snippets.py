@@ -83,6 +83,13 @@ PANEL_TEMPLATE = """
     shape_element.SetShape([final_solid])
     shape_element.Name = 'Panel {panel_index} - {panel_type}'
     print('Successfully created Panel {panel_index} - {panel_type}.')
+
+    # Rotate the panel 90 degrees around the Y-axis
+    axis_p1 = XYZ(panel_offset_x, 0, 0)
+    axis_p2 = XYZ(panel_offset_x, 1, 0)
+    rotation_axis = Line.CreateBound(axis_p1, axis_p2)
+    ElementTransformUtils.RotateElement(doc, shape_element.Id, rotation_axis, math.pi / 2)
+    print('Rotated panel {panel_index} around Y-axis.')
 """
 
 FILE_FOOTER_TEMPLATE = """\

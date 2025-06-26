@@ -63,6 +63,13 @@ try:
     shape_element.Name = 'Panel 1 - Sample Door Type'
     print('Successfully created Panel 1 - Sample Door Type.')
 
+    # Rotate the panel 90 degrees around the Y-axis
+    axis_p1 = XYZ(panel_offset_x, 0, 0)
+    axis_p2 = XYZ(panel_offset_x, 1, 0)
+    rotation_axis = Line.CreateBound(axis_p1, axis_p2)
+    ElementTransformUtils.RotateElement(doc, shape_element.Id, rotation_axis, math.pi / 2)
+    print('Rotated panel 1 around Y-axis.')
+
     # --- Panel 2: Sample Pilaster Type ---
     panel_width = 6.0
     panel_height = 0.5833333333333334
@@ -109,6 +116,13 @@ try:
     shape_element.SetShape([final_solid])
     shape_element.Name = 'Panel 2 - Sample Pilaster Type'
     print('Successfully created Panel 2 - Sample Pilaster Type.')
+
+    # Rotate the panel 90 degrees around the Y-axis
+    axis_p1 = XYZ(panel_offset_x, 0, 0)
+    axis_p2 = XYZ(panel_offset_x, 1, 0)
+    rotation_axis = Line.CreateBound(axis_p1, axis_p2)
+    ElementTransformUtils.RotateElement(doc, shape_element.Id, rotation_axis, math.pi / 2)
+    print('Rotated panel 2 around Y-axis.')
 
     # --- Panel 3: Sample Pilaster Type ---
     panel_width = 6.0
@@ -157,6 +171,13 @@ try:
     shape_element.Name = 'Panel 3 - Sample Pilaster Type'
     print('Successfully created Panel 3 - Sample Pilaster Type.')
 
+    # Rotate the panel 90 degrees around the Y-axis
+    axis_p1 = XYZ(panel_offset_x, 0, 0)
+    axis_p2 = XYZ(panel_offset_x, 1, 0)
+    rotation_axis = Line.CreateBound(axis_p1, axis_p2)
+    ElementTransformUtils.RotateElement(doc, shape_element.Id, rotation_axis, math.pi / 2)
+    print('Rotated panel 3 around Y-axis.')
+
     # --- Panel 4: Sample Side Panel Type ---
     panel_width = 4.333333333333333
     panel_height = 4.166666666666667
@@ -204,6 +225,13 @@ try:
     shape_element.Name = 'Panel 4 - Sample Side Panel Type'
     print('Successfully created Panel 4 - Sample Side Panel Type.')
 
+    # Rotate the panel 90 degrees around the Y-axis
+    axis_p1 = XYZ(panel_offset_x, 0, 0)
+    axis_p2 = XYZ(panel_offset_x, 1, 0)
+    rotation_axis = Line.CreateBound(axis_p1, axis_p2)
+    ElementTransformUtils.RotateElement(doc, shape_element.Id, rotation_axis, math.pi / 2)
+    print('Rotated panel 4 around Y-axis.')
+
     # --- Panel 5: Sample Side Panel Type ---
     panel_width = 4.333333333333333
     panel_height = 4.166666666666667
@@ -250,6 +278,13 @@ try:
     shape_element.SetShape([final_solid])
     shape_element.Name = 'Panel 5 - Sample Side Panel Type'
     print('Successfully created Panel 5 - Sample Side Panel Type.')
+
+    # Rotate the panel 90 degrees around the Y-axis
+    axis_p1 = XYZ(panel_offset_x, 0, 0)
+    axis_p2 = XYZ(panel_offset_x, 1, 0)
+    rotation_axis = Line.CreateBound(axis_p1, axis_p2)
+    ElementTransformUtils.RotateElement(doc, shape_element.Id, rotation_axis, math.pi / 2)
+    print('Rotated panel 5 around Y-axis.')
 except Exception as e:
     print("An error occurred during panel creation: {{0}}".format(e))
     t.RollBack()
