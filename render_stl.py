@@ -3,7 +3,7 @@ from stl import mesh
 import numpy as np
 
 # Load the STL file
-stl_file = 'floor.stl'
+stl_file = 'StallCentered.stl'
 try:
     your_mesh = mesh.Mesh.from_file(stl_file)
 except FileNotFoundError:
